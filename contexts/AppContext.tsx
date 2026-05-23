@@ -38,9 +38,17 @@ const initialState: AppState = {
     temperatureUnit: 'fahrenheit',
   },
   savedLocations: [],
-  apiConfigurations: [],
-  activeApiProviderId: null,
-  hasCompletedOnboarding: false,
+  apiConfigurations: [
+    {
+      id: 'default-gemini',
+      name: 'Google Gemini (Server)',
+      provider: 'gemini',
+      apiKey: 'built-in',
+      model: 'gemini-3.5-flash',
+    }
+  ],
+  activeApiProviderId: 'default-gemini',
+  hasCompletedOnboarding: true,
 };
 
 // Reducer
@@ -96,8 +104,11 @@ const appReducer = (state: AppState, action: Action): AppState => {
         return { ...state, hasCompletedOnboarding: true };
     case 'SET_STATE': {
         // Migration from old structure
-        if (action.payload.apiConfigurations && !Array.isArray(action.payload.apiConfigurations)) {
-            const oldConfigs = action.payload.apiConfigurations as any;
+        let payloadConfigs = action.payload.apiConfigurations || [];
+        let activeId = action.payload.activeApiProviderId;
+
+        if (payloadConfigs && !Array.isArray(payloadConfigs)) {
+            const oldConfigs = payloadConfigs as any;
             const migratedConfigs: ApiConfig[] = Object.keys(oldConfigs).map(provider => ({
                 id: provider,
                 name: provider.charAt(0).toUpperCase() + provider.slice(1),
@@ -105,13 +116,33 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 apiKey: oldConfigs[provider],
                 model: 'gemini-2.5-flash',
             }));
-            action.payload.apiConfigurations = migratedConfigs;
-            action.payload.activeApiProviderId = (action.payload as any).activeApiProvider || (migratedConfigs.length > 0 ? migratedConfigs[0].id : null);
+            payloadConfigs = migratedConfigs;
+            activeId = (action.payload as any).activeApiProvider || (migratedConfigs.length > 0 ? migratedConfigs[0].id : null);
+        }
+
+        // If there are no configurations, inject the default server-side Gemini config
+        if (!payloadConfigs || payloadConfigs.length === 0) {
+            payloadConfigs = [
+                {
+                    id: 'default-gemini',
+                    name: 'Google Gemini (Server)',
+                    provider: 'gemini',
+                    apiKey: 'built-in',
+                    model: 'gemini-3.5-flash',
+                }
+            ];
+            activeId = 'default-gemini';
+        }
+
+        if (!activeId && payloadConfigs.length > 0) {
+            activeId = payloadConfigs[0].id;
         }
 
         return {
           ...initialState,
           ...action.payload,
+          apiConfigurations: payloadConfigs,
+          activeApiProviderId: activeId,
           settings: { ...initialState.settings, ...action.payload.settings },
         };
     }

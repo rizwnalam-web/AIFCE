@@ -95,19 +95,26 @@ const generateText = async (prompt: string, jsonSchema: any = null): Promise<str
     }
 
     switch (config.provider) {
-        case 'gemini':
-            const ai = new GoogleGenAI({ apiKey: config.apiKey });
-            const geminiConfig: any = {};
-            if (jsonSchema) {
-                geminiConfig.responseMimeType = 'application/json';
-                geminiConfig.responseSchema = jsonSchema;
-            }
-            const geminiResponse = await ai.models.generateContent({
-                model: config.model,
-                contents: finalPrompt,
-                config: geminiConfig,
+        case 'gemini': {
+            const response = await fetch('/api/gemini/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: finalPrompt,
+                    jsonSchema: jsonSchema,
+                    model: config.model || 'gemini-3.5-flash',
+                })
             });
-            return geminiResponse.text;
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Server Gemini Error: ${errText}`);
+            }
+            const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            return data.text;
+        }
 
         case 'anthropic':
             const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
@@ -156,11 +163,26 @@ const generateMultimodal = async (textPrompt: string, imagePart: { inlineData: {
     const config = getActiveProviderConfig();
 
     switch (config.provider) {
-        case 'gemini':
-            const ai = new GoogleGenAI({ apiKey: config.apiKey });
-            const geminiParts = [imagePart, { text: textPrompt }];
-            const geminiResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash-image', contents: { parts: geminiParts } });
-            return geminiResponse.text;
+        case 'gemini': {
+            const response = await fetch('/api/gemini/multimodal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: textPrompt,
+                    imagePart: imagePart,
+                    model: config.model || 'gemini-2.5-flash-image',
+                })
+            });
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Server Gemini Multimodal Error: ${errText}`);
+            }
+            const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            return data.text;
+        }
 
         case 'anthropic':
             const anthropicParts = [
@@ -381,38 +403,22 @@ export const getTrendingPlantingAdvice = async (cropName: string, region: string
     const prompt = `Provide the latest real-time trending planting advice, sowing timelines, regional tips, and gardening discussions/news for growing "${cropName}" in the region "${region}". Focus on the current year's seasonal suggestions. Use markdown.`;
 
     if (config.provider === 'gemini') {
-      const ai = new GoogleGenAI({ 
-        apiKey: config.apiKey, 
-        httpOptions: { 
-          headers: { 
-            'User-Agent': 'aistudio-build' 
-          } 
-        } 
+      const response = await fetch('/api/gemini/trending', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cropName, region })
       });
-      const geminiResponse = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-        config: {
-          tools: [{ googleSearch: {} }],
-        }
-      });
-
-      const sources: Array<{ title: string; uri: string }> = [];
-      const chunks = geminiResponse.candidates?.[0]?.groundingMetadata?.groundingChunks;
-      if (chunks) {
-        chunks.forEach((chunk: any) => {
-          if (chunk.web && chunk.web.uri && chunk.web.title) {
-            sources.push({
-              title: chunk.web.title,
-              uri: chunk.web.uri,
-            });
-          }
-        });
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Server Gemini Trending Error: ${errText}`);
       }
-
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
       return {
-        text: geminiResponse.text || "No active trending advice found.",
-        sources: sources.length > 0 ? sources : undefined,
+        text: data.text,
+        sources: data.sources,
       };
     } else {
       const responseText = await generateText(prompt + " Since you do not have active web search grounding, use your best general knowledge about trending regional gardening patterns.");
