@@ -96,5 +96,82 @@ export interface SavedComparison {
 }
 
 export interface User {
+  id?: string;
   email: string;
+}
+
+export interface UserProfile extends User {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  profileImage?: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  zipCode?: string;
+  isVerified?: boolean;
+  isActive?: boolean;
+  registeredAt?: string;
+  lastLogin?: string;
+}
+
+// Registration Types
+export interface RegistrationFormData {
+  // Account Information
+  email: string;
+  password: string;
+  confirmPassword: string;
+
+  // Personal Information
+  firstName: string;
+  lastName: string;
+  phone?: string;
+
+  // Address Information
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  zipCode?: string;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  profileImage?: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  zipCode?: string;
+  isVerified: boolean;
+  isActive: boolean;
+  registeredAt: string;
+  lastLogin?: string;
+}
+
+export interface RegistrationResponse {
+  success: boolean;
+  userId?: string;
+  user?: UserProfile;
+  message?: string;
+  error?: string;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  userId?: string;
+  user?: UserProfile;
+  token?: string;
+  message?: string;
+  error?: string;
 }

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { FeatureTab, User, ApiConfig } from './types';
+import { FeatureTab, UserProfile, ApiConfig } from './types';
 import { LeafIcon, CloudIcon, WaterDropIcon, SproutIcon, BookIcon, SettingsIcon } from './components/icons';
 import GrowingCapacity from './components/GrowingCapacity';
 import WeatherPrediction from './components/WeatherPrediction';
@@ -14,7 +14,7 @@ import ApiSettings from './components/ApiSettings';
 import OnboardingTour from './components/OnboardingTour';
 
 interface AppProps {
-  user: User;
+  user: UserProfile;
   onLogout: () => void;
 }
 
@@ -207,9 +207,11 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
                   <SettingsIcon />
                 </button>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-gray-300 truncate" title={user.email}>{user.email}</p>
+                  <p className="text-gray-300 truncate" title={user.email}>
+                    {user.firstName || user.email} {user.lastName ? `${user.lastName}` : ''}
+                  </p>
                   <button onClick={onLogout} className="font-medium text-red-400 hover:opacity-80 transition-opacity focus:outline-none">
-                      Logout
+                    Logout
                   </button>
                 </div>
               </div>
