@@ -1,0 +1,6 @@
+{
+  "name": "AI Farming Cultivation Estimator",
+  "description": "An AI-powered assistant for urban and rural farmers to optimize crop cultivation. The app helps increase plant growing capacity, predicts weather, and estimates watering and fertilization needs based on location, crop type, and crop health.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
