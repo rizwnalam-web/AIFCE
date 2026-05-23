@@ -1,0 +1,206 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model with registration information
+model User {
+  id              String     @id @default(cuid())
+  email           String     @unique
+  password        String?    // Hashed password (null for OAuth)
+  
+  // Profile Information
+  firstName       String?
+  lastName        String?
+  phone           String?
+  profileImage    String?    // URL to profile picture
+  
+  // Address Information
+  streetAddress   String?
+  city            String?
+  state           String?
+  country         String?
+  zipCode         String?
+  
+  // Account Status
+  isVerified      Boolean    @default(false)
+  emailVerifiedAt DateTime?
+  isActive        Boolean    @default(true)
+  
+  // Metadata
+  lastLogin       DateTime?
+  registeredAt    DateTime   @default(now())
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relations
+  appState          AppState?
+  savedLocations    SavedLocation[]
+  apiConfigs        ApiConfig[]
+  healthHistory     HealthHistoryEntry[]
+  registrationLog   RegistrationLog?
+
+  @@index([email])
+  @@index([isVerified])
+  @@index([registeredAt])
+}
+
+// App State - Stores user settings and preferences
+model AppState {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  units                 String   @default("imperial") // 'imperial' or 'metric'
+  theme                 String   @default("dark") // 'dark' or 'light'
+  temperatureUnit       String   @default("fahrenheit") // 'fahrenheit' or 'celsius'
+  hasCompletedOnboarding Boolean @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Saved Locations - User's tracked locations
+model SavedLocation {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  moisture  String?
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+// API Configurations - Multiple API provider keys
+model ApiConfig {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  provider  String   // 'gemini', 'openai', 'grok', 'deepseek', 'anthropic', 'cohere'
+  apiKey    String
+  model     String
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+// Health History - Track crop health assessments
+model HealthHistoryEntry {
+  id                  String   @id @default(cuid())
+  userId              String
+  date                String
+  cropType            String
+  location            String
+  healthDescription   String
+  imageUrl            String?
+  imageBase64         String?   // Store base64 for image data
+  plan                String
+  geminiResponseCache String?   // Cache the LLM response
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([cropType])
+  @@index([location])
+}
+
+// Weather Cache - Store weather predictions to reduce API calls
+model WeatherCache {
+  id        String   @id @default(cuid())
+  location  String
+  data      String   // JSON stringified weather data
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([location])
+  @@index([expiresAt])
+}
+
+// LLM Request Log - Track all LLM API calls for audit and debugging
+model LLMRequestLog {
+  id            String   @id @default(cuid())
+  userId        String?  // Nullable for anonymous calls
+  provider      String   // 'gemini', 'openai', etc.
+  endpoint      String   // The API endpoint called
+  requestType   String   // 'weather', 'crop_analysis', 'fertilization', etc.
+  inputTokens   Int?
+  outputTokens  Int?
+  responseTime  Int      // milliseconds
+  status        String   // 'success' or 'error'
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([provider])
+  @@index([requestType])
+  @@index([createdAt])
+}
+
+// Crop Comparison - Store crop comparison results
+model CropComparison {
+  id          String   @id @default(cuid())
+  userId      String?
+  crops       String   // JSON array of crop names
+  comparison  String   // JSON stringified comparison data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Planting Calendar Cache - Store calendar data
+model PlantingCalendar {
+  id          String   @id @default(cuid())
+  crop        String
+  climateZone String
+  calendar    String   // JSON stringified calendar data
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@unique([crop, climateZone])
+  @@index([crop])
+  @@index([expiresAt])
+}
+
+// Registration Log - Track user registrations
+model RegistrationLog {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  registrationType  String   @default("email") // 'email', 'oauth', 'social'
+  ipAddress         String?
+  userAgent         String?  // Browser/device info
+  registrationStep  Int      @default(1) // Track multi-step registration progress
+  verificationToken String?  // For email verification
+  tokenExpiresAt    DateTime?
+  isCompleted       Boolean  @default(false)
+  completedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([verificationToken])
+  @@index([isCompleted])
+}

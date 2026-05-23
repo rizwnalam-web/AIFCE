@@ -1,8 +1,17 @@
+import dotenv from 'dotenv';
 import express from 'express';
+import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
+import prisma, { testConnection, disconnectPrisma } from './server/db';
+import appStateRoutes from './server/routes/appStateRoutes';
+import llmRoutes from './server/routes/llmRoutes';
+import authRoutes from './server/routes/authRoutes';
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Since we are compiling as commonjs in production and running tsx in dev, 
 // let's derive __dirname safely for ESM
@@ -17,10 +26,18 @@ try {
 }
 
 async function startServer() {
+  // Test database connection on startup
+  const dbConnected = await testConnection();
+  if (!dbConnected) {
+    console.error('Failed to connect to database. Make sure PostgreSQL is running and DATABASE_URL is correct.');
+    process.exit(1);
+  }
+
   const app = express();
   const PORT = 3000;
 
-  // Use generous JSON limits for base64 image transfers
+  // Middleware
+  app.use(cors());
   app.use(express.json({ limit: '15mb' }));
   app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
@@ -46,6 +63,25 @@ async function startServer() {
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', serverTime: new Date().toISOString() });
   });
+
+  // Database health check
+  app.get('/api/db-health', async (req, res) => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      res.json({ status: 'connected', message: 'Database is healthy' });
+    } catch (error) {
+      res.status(500).json({ status: 'disconnected', error: 'Database connection failed' });
+    }
+  });
+
+  // Mount auth routes
+  app.use('/api/auth', authRoutes);
+
+  // Mount app state routes
+  app.use('/api/app-state', appStateRoutes);
+
+  // Mount LLM routes
+  app.use('/api/llm', llmRoutes);
 
   // Proxy to Generate Text (with optional JSON Schema formatting)
   app.post('/api/gemini/generate', async (req, res) => {
@@ -169,11 +205,19 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT} under NODE_ENV=${process.env.NODE_ENV || 'development'}`);
+  app.listen(PORT, 'localhost', () => {
+    console.log(`Server running on http://localhost:${PORT} under NODE_ENV=${process.env.NODE_ENV || 'development'}`);
+  });
+
+  // Graceful shutdown
+  process.on('SIGINT', async () => {
+    console.log('\nShutting down server...');
+    await disconnectPrisma();
+    process.exit(0);
   });
 }
 
 startServer().catch((err) => {
   console.error('Failed to start fullstack server:', err);
+  process.exit(1);
 });

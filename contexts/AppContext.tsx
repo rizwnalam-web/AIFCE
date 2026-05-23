@@ -179,9 +179,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   // Save state to localStorage whenever it changes
   useEffect(() => {
     try {
-      if (state !== initialState) {
-        localStorage.setItem('farmAppState', JSON.stringify(state));
-      }
+      localStorage.setItem('farmAppState', JSON.stringify(state));
     } catch (error) {
       console.error("Failed to save app state to localStorage", error);
     }
