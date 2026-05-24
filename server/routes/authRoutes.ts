@@ -50,7 +50,7 @@ router.post('/login', async (req, res) => {
 
 // Session check endpoint (Placeholder for session management)
 router.get('/session', (req, res) => {
-  res.status(401).json({ error: 'No active session' });
+  res.json({ user: null });
 });
 
 export default router;
