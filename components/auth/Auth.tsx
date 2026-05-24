@@ -2,34 +2,40 @@ import React, { useState, useEffect } from 'react';
 import App from '../../App';
 import Login from './Login';
 import Register from './Register';
-import { User } from '../../types';
+import backendAPI from '../../services/backendAPI';
+import { UserProfile } from '../../types';
 
 const Auth: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    // Aligned with DEPLOYMENT.md: Removed localStorage usage.
+    // Session should be initialized/verified via a backend call.
+    const initSession = async () => {
+      try {
+        const response: any = await backendAPI.initSession();
+        if (response?.user) setUser(response.user);
+      } catch (error) {
+        console.error('Failed to initialize session', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      localStorage.removeItem('currentUser');
-    }
-    setIsLoading(false);
+    };
+    initSession();
   }, []);
 
-  const handleLogin = (loggedInUser: User) => {
+  const handleLogin = (loggedInUser: UserProfile) => {
     setUser(loggedInUser);
-    localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
+    backendAPI.setUserId(loggedInUser.id ?? null);
   };
 
   const handleLogout = () => {
     setUser(null);
-    localStorage.removeItem('currentUser');
+    // Aligned with DEPLOYMENT.md: Removed localStorage usage.
+    // Session termination should be handled via backend/cookies.
+    backendAPI.setUserId(null);
   };
   
   if (isLoading) {

@@ -35,7 +35,8 @@ curl http://localhost:3000/api/db-health
 # Check server
 curl http://localhost:3000/api/health
 
-# Check app starts at http://localhost:3000
+# Check app (Vite Dev Server) starts at http://localhost:5173
+# If backend is on 3000, ensure vite.config.ts has a proxy for /api
 ```
 
 ### 2. Test Core Functionality

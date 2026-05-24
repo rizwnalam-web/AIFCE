@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
-import { User } from '../../types';
+import backendAPI from '../../services/backendAPI';
+import { LoginCredentials, UserProfile } from '../../types';
 
 interface LoginProps {
-  onLoginSuccess: (user: User) => void;
+  onLoginSuccess: (user: UserProfile) => void;
   onSwitchToRegister: () => void;
 }
 
@@ -12,7 +13,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onSwitchToRegister }) => 
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -21,27 +22,18 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onSwitchToRegister }) => 
       return;
     }
     
-    // NOTE: This is a mock authentication system for demonstration purposes.
-    // In a real application, you would make an API call to a secure backend.
     try {
-        const storedUsersString = localStorage.getItem('farmAppUsers');
-        if (!storedUsersString) {
-            setError('Invalid email or password.');
-            return;
-        }
+      const credentials: LoginCredentials = { email, password };
+      const response: any = await backendAPI.login(credentials);
 
-        const storedUsers = JSON.parse(storedUsersString);
-        const userRecord = storedUsers[email.toLowerCase()];
+      if (!response.user) {
+        throw new Error(response.error || response.message || 'Login failed.');
+      }
 
-        if (userRecord && userRecord.password === password) {
-            onLoginSuccess({ email: email.toLowerCase() });
-        } else {
-            setError('Invalid email or password.');
-        }
-
-    } catch (e) {
-        console.error("Error during login:", e);
-        setError('An unexpected error occurred. Please try again.');
+      onLoginSuccess(response.user);
+    } catch (e: any) {
+      console.error('Login API error:', e);
+      setError(e?.message || 'An unexpected error occurred. Please try again.');
     }
   };
 

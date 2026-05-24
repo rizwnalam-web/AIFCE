@@ -10,46 +10,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User model with registration information
+// User model for future authentication
 model User {
-  id              String     @id @default(cuid())
-  email           String     @unique
-  password        String?    // Hashed password (null for OAuth)
-  
-  // Profile Information
-  firstName       String?
-  lastName        String?
-  phone           String?
-  profileImage    String?    // URL to profile picture
-  
-  // Address Information
-  streetAddress   String?
-  city            String?
-  state           String?
-  country         String?
-  zipCode         String?
-  
-  // Account Status
-  isVerified      Boolean    @default(false)
-  emailVerifiedAt DateTime?
-  isActive        Boolean    @default(true)
-  
-  // Metadata
-  lastLogin       DateTime?
-  registeredAt    DateTime   @default(now())
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   // Relations
-  appState          AppState?
-  savedLocations    SavedLocation[]
-  apiConfigs        ApiConfig[]
-  healthHistory     HealthHistoryEntry[]
-  registrationLog   RegistrationLog?
+  appState   AppState?
+  savedLocations SavedLocation[]
+  apiConfigs ApiConfig[]
+  healthHistory HealthHistoryEntry[]
 
   @@index([email])
-  @@index([isVerified])
-  @@index([registeredAt])
 }
 
 // App State - Stores user settings and preferences
@@ -181,26 +156,4 @@ model PlantingCalendar {
   @@unique([crop, climateZone])
   @@index([crop])
   @@index([expiresAt])
-}
-
-// Registration Log - Track user registrations
-model RegistrationLog {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  registrationType  String   @default("email") // 'email', 'oauth', 'social'
-  ipAddress         String?
-  userAgent         String?  // Browser/device info
-  registrationStep  Int      @default(1) // Track multi-step registration progress
-  verificationToken String?  // For email verification
-  tokenExpiresAt    DateTime?
-  isCompleted       Boolean  @default(false)
-  completedAt       DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([verificationToken])
-  @@index([isCompleted])
 }

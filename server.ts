@@ -4,14 +4,13 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
-import { createServer as createViteServer } from 'vite';
-import prisma, { testConnection, disconnectPrisma } from './server/db';
-import appStateRoutes from './server/routes/appStateRoutes';
-import llmRoutes from './server/routes/llmRoutes';
-import authRoutes from './server/routes/authRoutes';
+import prisma, { testConnection, disconnectPrisma } from './server/db.js';
+import appStateRoutes from './server/routes/appStateRoutes.js';
+import llmRoutes from './server/routes/llmRoutes.js';
+import authRoutes from './server/routes/authRoutes.js';
 
-// Load environment variables from .env file
-dotenv.config();
+// Load environment variables from server/.env file
+dotenv.config({ path: path.resolve(process.cwd(), 'server', '.env') });
 
 // Since we are compiling as commonjs in production and running tsx in dev, 
 // let's derive __dirname safely for ESM
@@ -74,14 +73,14 @@ async function startServer() {
     }
   });
 
-  // Mount auth routes
-  app.use('/api/auth', authRoutes);
-
   // Mount app state routes
   app.use('/api/app-state', appStateRoutes);
 
   // Mount LLM routes
   app.use('/api/llm', llmRoutes);
+
+  // Mount Auth routes
+  app.use('/api/auth', authRoutes);
 
   // Proxy to Generate Text (with optional JSON Schema formatting)
   app.post('/api/gemini/generate', async (req, res) => {
@@ -190,14 +189,8 @@ async function startServer() {
     }
   });
 
-  // Vite middleware setup
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
+  // In development the frontend runs on a separate Vite port.
+  if (process.env.NODE_ENV === 'production') {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {

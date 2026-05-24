@@ -116,50 +116,18 @@ export interface UserProfile extends User {
   lastLogin?: string;
 }
 
-// Registration Types
 export interface RegistrationFormData {
-  // Account Information
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   confirmPassword: string;
-
-  // Personal Information
-  firstName: string;
-  lastName: string;
-  phone?: string;
-
-  // Address Information
-  streetAddress?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  zipCode?: string;
-}
-
-export interface UserProfile {
-  id: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  profileImage?: string;
-  streetAddress?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  zipCode?: string;
-  isVerified: boolean;
-  isActive: boolean;
-  registeredAt: string;
-  lastLogin?: string;
-}
-
-export interface RegistrationResponse {
-  success: boolean;
-  userId?: string;
-  user?: UserProfile;
-  message?: string;
-  error?: string;
+  phone: string;
+  streetAddress: string;
+  city: string;
+  state: string;
+  country: string;
+  zipCode: string;
 }
 
 export interface LoginCredentials {

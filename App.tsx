@@ -47,10 +47,10 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
       setIsLoadingAlerts(true);
       try {
         if (savedLocations && savedLocations.length > 0) {
-          const allAlertsPromises = savedLocations.map(loc => checkForAlerts(loc.name));
+          const allAlertsPromises = savedLocations.map((loc: any) => checkForAlerts(loc.name));
           const resolvedAlerts = await Promise.all(allAlertsPromises);
           
-          const flattenedAlerts = resolvedAlerts.flat().filter((alert): alert is string => alert !== null);
+          const flattenedAlerts = resolvedAlerts.flat().filter((alert: any): alert is string => alert !== null);
           setWeatherAlerts(flattenedAlerts);
         } else {
           setWeatherAlerts([]);
@@ -74,9 +74,9 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
     try {
         const newAlerts = await checkForAlerts(location);
         
-        setWeatherAlerts(prevAlerts => {
+        setWeatherAlerts((prevAlerts: string[]) => {
             // Remove any old alerts for the location being checked. The alert text is prefixed with the location.
-            const otherAlerts = prevAlerts.filter(alert => !alert.startsWith(`${location}:`));
+            const otherAlerts = prevAlerts.filter((alert: string) => !alert.startsWith(`${location}:`));
             
             // Add the new alerts if any were found.
             const allAlerts = [...otherAlerts];
@@ -171,11 +171,11 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
                       <span className="text-gray-400">Provider:</span>
                       <select
                           value={activeApiProviderId ?? ''}
-                          onChange={(e) => dispatch({ type: 'SET_ACTIVE_PROVIDER_ID', payload: e.target.value })}
+                          onChange={(e: any) => dispatch({ type: 'SET_ACTIVE_PROVIDER_ID', payload: e.target.value })}
                           className="bg-gray-700 border border-gray-600 rounded-md py-1 px-2 text-white font-semibold focus:outline-none focus:ring-1 focus:ring-green-500 capitalize"
                         >
                           {apiConfigurations.length > 0 ? (
-                            apiConfigurations.map(p => (
+                            apiConfigurations.map((p: any) => (
                               <option key={p.id} value={p.id}>{p.name}</option>
                             ))
                           ) : (

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import * as llmService from '../llmService';
+import * as llmService from '../llmService.js';
 
 const router = Router();
 

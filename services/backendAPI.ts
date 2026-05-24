@@ -1,11 +1,9 @@
-import { RegistrationFormData, LoginCredentials, AuthResponse } from '../types';
-
 /**
  * Backend API Service
  * Centralized service for all backend API calls
  */
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = ''; // Use relative paths to support Vite proxying
 
 interface ApiResponse<T> {
   success: boolean;
@@ -48,8 +46,20 @@ class BackendAPIService {
   }
 
   // App State APIs
+  async initSession() {
+    return this.fetch('/api/auth/session', 'GET');
+  }
+
   async initAppState(email: string) {
     return this.fetch('/api/app-state/init', 'POST', { email });
+  }
+
+  async register(formData: any) {
+    return this.fetch('/api/auth/register', 'POST', formData);
+  }
+
+  async login(credentials: any) {
+    return this.fetch('/api/auth/login', 'POST', credentials);
   }
 
   async getAppState() {
@@ -60,26 +70,6 @@ class BackendAPIService {
   async updateAppState(updates: any) {
     if (!this.userId) throw new Error('User ID not set');
     return this.fetch(`/api/app-state/${this.userId}`, 'PUT', updates);
-  }
-
-  async register(formData: RegistrationFormData) {
-    const response = await this.fetch<AuthResponse>('/api/auth/register', 'POST', formData);
-    if (!response.success) {
-      throw new Error(response.error || response.message || 'Registration failed');
-    }
-    return response;
-  }
-
-  async login(credentials: LoginCredentials) {
-    const response = await this.fetch<AuthResponse>('/api/auth/login', 'POST', credentials);
-    if (!response.success) {
-      throw new Error(response.error || response.message || 'Login failed');
-    }
-    return response;
-  }
-
-  async getUserProfile(userId: string) {
-    return this.fetch<AuthResponse>(`/api/auth/user/${encodeURIComponent(userId)}`);
   }
 
   // Location APIs
