@@ -18,6 +18,14 @@ export interface WeatherHighlight {
   forecastSource: string;
 }
 
+export interface DataPoint {
+  week: number;
+  canopy: number;
+  root: number;
+  yieldPotential: number;
+  stage: string;
+}
+
 const parseTemp = (tStr: string): number | null => {
   if (!tStr) return null;
   const num = parseFloat(tStr.replace(/[^0-9.-]/g, ''));

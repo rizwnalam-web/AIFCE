@@ -1,14 +1,16 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { FeatureTab, UserProfile, ApiConfig } from './types';
+import { FeatureTab, UserProfile, ApiConfig, SavedReport } from './types';
 import { LeafIcon, CloudIcon, WaterDropIcon, SproutIcon, BookIcon, SettingsIcon } from './components/icons';
 import GrowingCapacity from './components/GrowingCapacity';
 import WeatherPrediction from './components/WeatherPrediction';
 import WateringEstimator from './components/WateringEstimator';
 import FertilizationEstimator from './components/FertilizationEstimator';
 import WeatherAlerts from './components/WeatherAlerts';
+import backendAPI from './services/backendAPI';
 import { checkForAlerts } from './services/geminiService';
 import Spinner from './components/shared/Spinner';
 import CropEncyclopedia from './components/CropEncyclopedia';
+import SavedPlansDashboard from './components/SavedPlansDashboard';
 import { useAppContext } from './contexts/AppContext';
 import ApiSettings from './components/ApiSettings';
 import OnboardingTour from './components/OnboardingTour';
@@ -25,7 +27,9 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const t = (key: TranslationKey) => translate(settings.language, key);
 
   const [activeTab, setActiveTab] = useState<FeatureTab>(FeatureTab.Capacity);
+  const [savedPlanToEdit, setSavedPlanToEdit] = useState<SavedReport | null>(null);
   const [weatherAlerts, setWeatherAlerts] = useState<string[]>([]);
+  const [newReportsCount, setNewReportsCount] = useState(0);
   const [isLoadingAlerts, setIsLoadingAlerts] = useState(true);
   const [isTourVisible, setIsTourVisible] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -72,6 +76,22 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
     }
   }, [savedLocations, apiConfigurations]);
 
+  const updateCount = useCallback(async () => {
+    if (apiConfigurations.length > 0) {
+      try {
+        const reports = await backendAPI.getReports();
+        const count = (reports as any[]).filter(r => !r.lastViewedAt).length;
+        setNewReportsCount(count);
+      } catch (e) {
+        console.warn("Failed to update new reports count", e);
+      }
+    }
+  }, [apiConfigurations]);
+
+  useEffect(() => {
+    updateCount();
+  }, [updateCount, activeTab]);
+
   const checkAlertsForLocation = useCallback(async (location: string) => {
     try {
         const newAlerts = await checkForAlerts(location);
@@ -113,7 +133,13 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
     
     switch (activeTab) {
       case FeatureTab.Capacity:
-        return <GrowingCapacity />;
+        return (
+          <GrowingCapacity
+            initialPlan={savedPlanToEdit?.content}
+            initialPlants={savedPlanToEdit?.title?.replace(/^Growing Plan:\s*/i, '')}
+            onClearInitialPlan={() => setSavedPlanToEdit(null)}
+          />
+        );
       case FeatureTab.Weather:
         return <WeatherPrediction checkAlertsForLocation={checkAlertsForLocation} />;
       case FeatureTab.Watering:
@@ -122,10 +148,20 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
         return <FertilizationEstimator />;
       case FeatureTab.Encyclopedia:
         return <CropEncyclopedia />;
+      case FeatureTab.SavedPlans:
+        return (
+          <SavedPlansDashboard 
+            onEditPlan={(plan) => {
+              setSavedPlanToEdit(plan);
+              setActiveTab(FeatureTab.Capacity);
+            }}
+            onReportsRead={updateCount}
+          />
+        );
       default:
         return null;
     }
-  }, [activeTab, apiConfigurations, checkAlertsForLocation]);
+  }, [activeTab, apiConfigurations, checkAlertsForLocation, savedPlanToEdit, updateCount]);
   
   const handleCloseTour = () => {
     dispatch({ type: 'COMPLETE_ONBOARDING' });
@@ -147,6 +183,7 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
     { name: FeatureTab.Watering, icon: <WaterDropIcon />, label: t('tabWatering') },
     { name: FeatureTab.Fertilization, icon: <SproutIcon />, label: t('tabFertilization') },
     { name: FeatureTab.Encyclopedia, icon: <BookIcon />, label: t('tabEncyclopedia') },
+    { name: FeatureTab.SavedPlans, icon: <BookIcon />, label: 'Saved Plans' },
   ];
 
   return (
@@ -258,7 +295,14 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
                         : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500'
                     } group inline-flex items-center justify-center py-3 px-2 md:px-4 border-b-2 font-medium text-sm md:text-base focus:outline-none transition-all duration-200 flex-grow text-center`}
                   >
-                    {tab.icon}
+                    <div className="relative">
+                      {tab.icon}
+                      {tab.name === FeatureTab.SavedPlans && newReportsCount > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-gray-800">
+                          {newReportsCount}
+                        </span>
+                      )}
+                    </div>
                     <span className="ml-2 hidden sm:inline">{tab.label}</span>
                   </button>
                 ))}

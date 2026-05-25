@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getCropInfo, getPlantingCalendar, compareCrops, getTrendingPlantingAdvice } from '../services/geminiService';
+import backendAPI from '../services/backendAPI';
 import Spinner from './shared/Spinner';
 import Card from './shared/Card';
 import { BookIcon, FileDownloadIcon, ScaleIcon, ShareIcon, PdfIcon } from './icons';
@@ -8,6 +9,7 @@ import AutoCompleteInput from './shared/AutoCompleteInput';
 import { CROP_SUGGESTION_LIST, LOCATION_SUGGESTION_LIST } from '../data/suggestions';
 import { useAppContext } from '../contexts/AppContext';
 import { saveAndDownloadReport } from '../utils/reportUtils';
+import { useToast } from '../contexts/ToastContext';
 
 export interface PlantingReminder {
   id: string;
@@ -96,16 +98,14 @@ const CropEncyclopedia: React.FC = () => {
   const [reminderFormMonth, setReminderFormMonth] = useState('January');
   const [reminderFormAction, setReminderFormAction] = useState('');
   
-  // In-app elegant notifications
-  const [inAppToast, setInAppToast] = useState<{ message: string; type: 'success' | 'info' | 'deleted' } | null>(null);
-
-
   // State for Crop Comparison
   const [comparisonCrops, setComparisonCrops] = useState<string[]>(['', '']);
   const [comparisonData, setComparisonData] = useState<CropComparisonData | null>(null);
   const [loadingComparison, setLoadingComparison] = useState(false);
   const [comparisonError, setComparisonError] = useState('');
   const [savedComparisons, setSavedComparisons] = useState<SavedComparison[]>([]);
+
+  const { showToast } = useToast();
 
 
   useEffect(() => {
@@ -201,6 +201,16 @@ const CropEncyclopedia: React.FC = () => {
 
   const handlePdfExport = async (content: string, filename: string, title: string, reportType: string) => {
       await saveAndDownloadReport(title, reportType, content, filename);
+  };
+
+  const handleSaveReport = async (title: string, type: string, content: string, filename: string) => {
+    try {
+      await backendAPI.saveReport(title, type, content, filename);
+      showToast(`${title} saved successfully.`, 'success');
+    } catch (error) {
+      console.error('Failed to save encyclopedia report:', error);
+      showToast('Unable to save report. Please try again.', 'error');
+    }
   };
 
   const fetchCropData = async (cropName: string) => {
@@ -439,13 +449,6 @@ const CropEncyclopedia: React.FC = () => {
     showToast(`Reminder for ${cropName} deleted.`, 'deleted');
   };
 
-  const showToast = (message: string, type: 'success' | 'info' | 'deleted') => {
-    setInAppToast({ message, type });
-    setTimeout(() => {
-      setInAppToast(prev => prev && prev.message === message ? null : prev);
-    }, 4500);
-  };
-
   const formatCalendarForExport = (data: PlantingCalendarData): string => {
     let content = `Planting Calendar for ${data.crop} in ${data.climateZone}\n\n`;
     content += data.calendar.map(row => `${row.month}: ${row.action}`).join('\n');
@@ -596,25 +599,6 @@ const CropEncyclopedia: React.FC = () => {
 
   return (
     <div className="relative">
-      {inAppToast && (
-        <div className="fixed bottom-6 right-6 z-50 animate-fade-in shadow-2xl">
-          <div className={`flex items-center gap-3 px-5 py-4 rounded-xl border ${
-            inAppToast.type === 'success' 
-              ? 'bg-green-950/90 border-green-500/30 text-green-200' 
-              : inAppToast.type === 'deleted' 
-              ? 'bg-red-950/90 border-red-500/30 text-red-200' 
-              : 'bg-gray-800 border-gray-600 text-gray-200'
-          }`}>
-            <div className={`p-1.5 rounded-full ${
-              inAppToast.type === 'success' ? 'bg-green-500/20' : inAppToast.type === 'deleted' ? 'bg-red-500/20' : 'bg-gray-600/20'
-            }`}>
-              {inAppToast.type === 'success' ? '✓' : inAppToast.type === 'deleted' ? '🗑' : 'ℹ'}
-            </div>
-            <p className="text-sm font-medium pr-4">{inAppToast.message}</p>
-            <button onClick={() => setInAppToast(null)} className="text-gray-400 hover:text-white text-lg font-semibold select-none focus:outline-none">&times;</button>
-          </div>
-        </div>
-      )}
       <h2 className="text-2xl font-bold text-gray-100 mb-1">Crop Encyclopedia</h2>
       <p className="text-gray-400 mb-6">Look up detailed crop information or generate a seasonal planting calendar.</p>
       
@@ -771,6 +755,13 @@ const CropEncyclopedia: React.FC = () => {
                         <ShareIcon />
                       </button>
                       <button 
+                        onClick={() => handleSaveReport(`Crop Guide: ${currentCrop}`, 'crop-guide', cropInfo, `guide-${currentCrop.replace(/\s+/g, '_')}.pdf`)}
+                        title="Save Guide to Account"
+                        className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
+                      >
+                        Save Report
+                      </button>
+                      <button 
                         onClick={() => handlePdfExport(cropInfo, `guide-${currentCrop.replace(/\s+/g, '_')}`, `Crop Guide - ${currentCrop}`, 'crop-guide')}
                         title="Export Guide as PDF"
                         className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
@@ -804,6 +795,13 @@ const CropEncyclopedia: React.FC = () => {
                         className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                       >
                         <ShareIcon />
+                      </button>
+                      <button 
+                        onClick={() => handleSaveReport(`Trending Advice: ${currentCrop} in ${activeGroundingRegion}`, 'trending-advice', trendingAdvice, `trending-${currentCrop.replace(/\s+/g, '_')}.pdf`)}
+                        title="Save Advice to Account"
+                        className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
+                      >
+                        Save Report
                       </button>
                       <button 
                         onClick={() => handlePdfExport(trendingAdvice, `trending-${currentCrop.replace(/\s+/g, '_')}-${activeGroundingRegion.replace(/\s+/g, '_')}`, `Trending Advice - ${currentCrop}`, 'trending-advice')}
@@ -952,6 +950,13 @@ const CropEncyclopedia: React.FC = () => {
                             className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                         >
                             <ShareIcon />
+                        </button>
+                        <button 
+                            onClick={() => handleSaveReport(`Planting Calendar: ${calendarData.crop}`, 'planting-calendar', formatCalendarForExport(calendarData), `${calendarData.crop.replace(/\s+/g, '_')}-calendar.pdf`)}
+                            title="Save Calendar to Account"
+                            className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
+                        >
+                            Save Report
                         </button>
                         <button 
                             onClick={() => handleExportCalendar('pdf')}
@@ -1208,6 +1213,13 @@ const CropEncyclopedia: React.FC = () => {
                         className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                     >
                         <ShareIcon />
+                    </button>
+                    <button
+                        onClick={() => handleSaveReport(`Crop Comparison: ${comparisonData.crops.map(c=>c.name).join(' vs ')}`, 'crop-comparison', formatComparisonForExport(comparisonData), `comparison-${comparisonData.crops.map(c=>c.name).join('_')}.pdf`)}
+                        title="Save Comparison to Account"
+                        className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
+                    >
+                        Save Report
                     </button>
                     <button
                         onClick={() => handlePdfExport(formatComparisonForExport(comparisonData), `crop-comparison-${comparisonData.crops.map(c=>c.name).join('_')}`, `Crop Comparison - ${comparisonData.crops.map(c=>c.name).join(' vs ')}`, 'crop-comparison')}

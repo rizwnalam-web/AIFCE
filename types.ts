@@ -6,6 +6,7 @@ export enum FeatureTab {
   Watering = 'Watering Needs',
   Fertilization = 'Fertilization & Disease Analysis',
   Encyclopedia = 'Crop Encyclopedia',
+  SavedPlans = 'Saved Plans',
 }
 
 export type ProviderType = 'gemini' | 'openai' | 'grok' | 'deepseek' | 'anthropic' | 'cohere';

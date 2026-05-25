@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import Auth from './components/auth/Auth';
 import { AppContextProvider } from './contexts/AppContext';
+import { ToastProvider } from './contexts/ToastContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -12,7 +13,9 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <AppContextProvider>
-      <Auth />
+      <ToastProvider>
+        <Auth />
+      </ToastProvider>
     </AppContextProvider>
   </React.StrictMode>
 );

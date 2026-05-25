@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getGrowingPlan, getYieldPrediction } from '../services/geminiService';
+import backendAPI from '../services/backendAPI';
 import Spinner from './shared/Spinner';
 import { LeafIcon, FileDownloadIcon, ShareIcon, PdfIcon, PrinterIcon } from './icons';
 import Card from './shared/Card';
@@ -8,8 +9,15 @@ import { CROP_SUGGESTION_LIST, LOCATION_SUGGESTION_LIST } from '../data/suggesti
 import { useAppContext } from '../contexts/AppContext';
 import { saveAndDownloadReport } from '../utils/reportUtils';
 import { GrowthTimelineChart } from './GrowthTimelineChart';
+import { SavedReport } from '../types';
 
-const GrowingCapacity: React.FC = () => {
+interface GrowingCapacityProps {
+  initialPlan?: string;
+  initialPlants?: string;
+  onClearInitialPlan?: () => void;
+}
+
+const GrowingCapacity: React.FC<GrowingCapacityProps> = ({ initialPlan, initialPlants, onClearInitialPlan }) => {
   const { state } = useAppContext();
   const { settings } = state;
 
@@ -28,6 +36,10 @@ const GrowingCapacity: React.FC = () => {
   const [yieldPrediction, setYieldPrediction] = useState('');
   const [loadingPrediction, setLoadingPrediction] = useState(false);
   const [predictionErrors, setPredictionErrors] = useState<{ [key: string]: string }>({});
+  const [savedPlans, setSavedPlans] = useState<SavedReport[]>([]);
+  const [loadingSavedPlans, setLoadingSavedPlans] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<string>('');
+  const [saveError, setSaveError] = useState<string>('');
 
   // Print-Friendly States & Custom Options
   const [showPrintModal, setShowPrintModal] = useState(false);
@@ -117,6 +129,14 @@ const GrowingCapacity: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (initialPlan) {
+      setPlan(initialPlan);
+      if (initialPlants) setPlants(initialPlants);
+      onClearInitialPlan?.();
+    }
+  }, [initialPlan, initialPlants, onClearInitialPlan]);
+
   const validatePlanForm = () => {
     const newErrors: { [key: string]: string } = {};
     if (!plotSize.trim()) newErrors.plotSize = 'Plot size is required.';
@@ -135,6 +155,23 @@ const GrowingCapacity: React.FC = () => {
     setPredictionErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  const loadSavedPlans = async () => {
+    setLoadingSavedPlans(true);
+    try {
+      const plans = await backendAPI.getSavedGrowingPlans();
+      setSavedPlans(plans || []);
+    } catch (error) {
+      console.warn('Unable to load saved growing plans:', error);
+      setSavedPlans([]);
+    } finally {
+      setLoadingSavedPlans(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSavedPlans();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,6 +225,33 @@ const GrowingCapacity: React.FC = () => {
           alert('Web Share API not supported. You can manually copy the report.');
           // You could also implement a copy-to-clipboard fallback here.
       }
+  };
+
+  const handleSavePlan = async () => {
+    if (!plan) return;
+    setSaveError('');
+    setSaveStatus('Saving plan...');
+
+    try {
+      const title = `Growing Plan: ${plants || 'Untitled'}`;
+      const filename = `growing-plan-${plants.replace(/\s+/g, '_') || 'untitled'}`;
+      await backendAPI.saveGrowingPlan(title, plan, `${filename}.pdf`);
+      setSaveStatus('Plan saved successfully.');
+      await loadSavedPlans();
+    } catch (error) {
+      console.error('Failed to save growing plan:', error);
+      setSaveError('Unable to save plan to backend. Please try again.');
+      setSaveStatus('');
+    }
+  };
+
+  const handleLoadPlan = (report: SavedReport) => {
+    setPlan(report.content);
+    if (report.title) {
+      const match = report.title.match(/^Growing Plan:\s*(.*)$/);
+      if (match) setPlants(match[1]);
+    }
+    setSaveStatus(`Loaded saved plan: ${report.title}`);
   };
 
   const handlePredictYield = async (e: React.FormEvent) => {
@@ -284,6 +348,13 @@ const GrowingCapacity: React.FC = () => {
                         <span>Field Print View</span>
                      </button>
                      <button 
+                        onClick={handleSavePlan}
+                        title="Save Plan to Backend"
+                        className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-800 transition-colors"
+                    >
+                        Save Plan
+                    </button>
+                     <button 
                         onClick={() => handleShare(`Growing Plan: ${plants}`, plan)}
                         title="Share Plan"
                         className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-500 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
@@ -306,7 +377,36 @@ const GrowingCapacity: React.FC = () => {
                     </button>
                 </div>
                 <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: plan.replace(/\n/g, '<br />') }} />
+                {(saveStatus || saveError) && (
+                  <div className="mt-4 text-sm text-left">
+                    {saveStatus && <p className="text-green-400">{saveStatus}</p>}
+                    {saveError && <p className="text-red-400">{saveError}</p>}
+                  </div>
+                )}
             </Card>
+
+            {savedPlans.length > 0 && (
+              <Card title="Saved Growing Plans" icon={<LeafIcon />}>
+                <div className="space-y-3">
+                  {savedPlans.map((report) => (
+                    <div key={report.id} className="rounded-xl border border-gray-700 p-3 bg-gray-900">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div>
+                          <p className="font-semibold text-gray-100">{report.title}</p>
+                          <p className="text-xs text-gray-400">Saved on {new Date(report.createdAt || '').toLocaleString()}</p>
+                        </div>
+                        <button
+                          onClick={() => handleLoadPlan(report)}
+                          className="px-3 py-1 text-xs font-semibold rounded-md bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          Load
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
 
             <GrowthTimelineChart cropName={plants} location={location} />
 

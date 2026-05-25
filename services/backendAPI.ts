@@ -2,7 +2,7 @@
  * Backend API Service
  * Centralized service for all backend API calls
  */
-
+import { AuthResponse, SavedReport } from '../types';
 const API_BASE_URL = ''; // Use relative paths to support Vite proxying
 
 interface ApiResponse<T> {
@@ -13,6 +13,12 @@ interface ApiResponse<T> {
 
 class BackendAPIService {
   private userId: string | null = null;
+
+  constructor() {
+    // Attempt to load userId from localStorage on service instantiation
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) this.userId = storedUserId;
+  }
 
   setUserId(userId: string | null) {
     this.userId = userId;
@@ -38,8 +44,15 @@ class BackendAPIService {
     const response = await fetch(url, options);
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || `API Error: ${response.statusText}`);
+      let errorMessage = `API Error: ${response.statusText}`;
+      try {
+        const error = await response.json();
+        errorMessage = error.error || errorMessage;
+      } catch (e) {
+        // Fallback if the response is not valid JSON (e.g., a 404 HTML page)
+        console.error('Failed to parse error response:', e);
+      }
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -59,7 +72,13 @@ class BackendAPIService {
   }
 
   async login(credentials: any) {
-    return this.fetch('/api/auth/login', 'POST', credentials);
+    const response = await this.fetch<AuthResponse>('/api/auth/login', 'POST', credentials);
+    if (response.success && response.userId) {
+      this.setUserId(response.userId);
+      // Store userId in local storage for persistence across sessions
+      localStorage.setItem('userId', response.userId);
+    }
+    return response;
   }
 
   async getAppState() {
@@ -230,6 +249,32 @@ class BackendAPIService {
     return this.fetch(`/api/reports/${this.userId}/${reportId}`);
   }
 
+  async updateReport(reportId: string, title?: string, content?: string, filename?: string, isFavorite?: boolean, lastViewedAt?: string): Promise<SavedReport> {
+    if (!this.userId) throw new Error('User ID not set');
+    return this.fetch<SavedReport>(`/api/reports/${this.userId}/${reportId}`, 'PUT', {
+      title,
+      content,
+      filename,
+      isFavorite,
+      lastViewedAt,
+    });
+  }
+
+  async deleteReport(reportId: string): Promise<{ success: boolean }> {
+    if (!this.userId) throw new Error('User ID not set');
+    return this.fetch<{ success: boolean }>(`/api/reports/${this.userId}/${reportId}`, 'DELETE');
+  }
+
+  async saveGrowingPlan(title: string, content: string, filename?: string) {
+    if (!this.userId) throw new Error('User ID not set');
+    return this.saveReport(title, 'growing-plan', content, filename);
+  }
+
+  async getSavedGrowingPlans(): Promise<SavedReport[]> {
+    const reports = await this.getReports();
+    return (reports as SavedReport[]).filter((report) => report.reportType === 'growing-plan');
+  }
+
   // Health checks
   async checkServerHealth() {
     return this.fetch('/api/health');
@@ -240,4 +285,12 @@ class BackendAPIService {
   }
 }
 
-export default new BackendAPIService();
+const backendAPIService = new BackendAPIService();
+
+// Optionally, add a logout method to clear the userId
+export const logout = () => {
+  backendAPIService.setUserId(null);
+  localStorage.removeItem('userId');
+  localStorage.removeItem('farmAppState'); // Also clear app settings
+};
+export default backendAPIService;

@@ -7,6 +7,8 @@ import { HealthHistoryEntry } from '../types';
 import AutoCompleteInput from './shared/AutoCompleteInput';
 import { CROP_SUGGESTION_LIST, LOCATION_SUGGESTION_LIST } from '../data/suggestions';
 import { saveAndDownloadReport } from '../utils/reportUtils';
+import backendAPI from '../services/backendAPI';
+import { useToast } from '../contexts/ToastContext';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -21,6 +23,7 @@ const FertilizationEstimator: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
 
   // State for health history
   const [healthHistory, setHealthHistory] = useState<HealthHistoryEntry[]>([]);
@@ -96,6 +99,19 @@ const FertilizationEstimator: React.FC = () => {
     setErrors(prev => ({ ...prev, image: '' }));
     if(fileInputRef.current) {
         fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSaveReport = async () => {
+    if (!plan) return;
+    try {
+      const title = `Health Analysis: ${cropType} (${location})`;
+      const filename = `health-analysis-${cropType.replace(/\s+/g, '_')}.pdf`;
+      await backendAPI.saveReport(title, 'health-analysis', plan, filename);
+      showToast('Crop health analysis saved successfully.', 'success');
+    } catch (error) {
+      console.error('Failed to save health report:', error);
+      showToast('Unable to save report. Please try again.', 'error');
     }
   };
 
@@ -231,6 +247,13 @@ ${entry.plan}`;
                     className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                 >
                     <ShareIcon />
+                </button>
+                <button 
+                    onClick={handleSaveReport}
+                    title="Save Analysis to Account"
+                    className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-800 transition-colors"
+                >
+                    Save Report
                 </button>
                 <button 
                     onClick={() => handlePdfExport(plan, `health-analysis-${cropType.replace(/\s+/g, '_')}`, `Crop Health Analysis - ${cropType}`, 'health-analysis')}
