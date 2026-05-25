@@ -4,11 +4,15 @@ import Login from './Login';
 import Register from './Register';
 import backendAPI from '../../services/backendAPI';
 import { UserProfile } from '../../types';
+import { useAppContext } from '../../contexts/AppContext';
+import { translate, LANGUAGE_OPTIONS, TranslationKey } from '../../i18n';
 
 const Auth: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { state, dispatch } = useAppContext();
+  const t = (key: TranslationKey) => translate(state.settings.language, key);
 
   useEffect(() => {
     // Aligned with DEPLOYMENT.md: Removed localStorage usage.
@@ -53,10 +57,23 @@ const Auth: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-900">
        <div className="w-full max-w-md">
+            <div className="mb-6 flex justify-center gap-2">
+              <select
+                value={state.settings.language}
+                onChange={(e) => dispatch({ type: 'SET_LANGUAGE', payload: e.target.value as any })}
+                className="bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-1 focus:ring-green-500"
+              >
+                {LANGUAGE_OPTIONS.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.nativeLabel}
+                  </option>
+                ))}
+              </select>
+            </div>
             <h1 className="text-3xl md:text-4xl font-bold text-green-400 text-center mb-2">
-                AI Farming Cultivation Estimator
+                {t('appTitle')}
             </h1>
-            <p className="text-center mb-8 text-gray-400">Your smart farming assistant</p>
+            <p className="text-center mb-8 text-gray-400">{t('yourSmartFarmingAssistant')}</p>
             {isRegistering ? (
                 <Register onRegisterSuccess={handleLogin} onSwitchToLogin={() => setIsRegistering(false)} />
             ) : (

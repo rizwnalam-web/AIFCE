@@ -12,6 +12,7 @@ import CropEncyclopedia from './components/CropEncyclopedia';
 import { useAppContext } from './contexts/AppContext';
 import ApiSettings from './components/ApiSettings';
 import OnboardingTour from './components/OnboardingTour';
+import { translate, LANGUAGE_OPTIONS, TranslationKey } from './i18n';
 
 interface AppProps {
   user: UserProfile;
@@ -21,6 +22,7 @@ interface AppProps {
 const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const { state, dispatch } = useAppContext();
   const { settings, savedLocations, apiConfigurations, activeApiProviderId, hasCompletedOnboarding } = state;
+  const t = (key: TranslationKey) => translate(settings.language, key);
 
   const [activeTab, setActiveTab] = useState<FeatureTab>(FeatureTab.Capacity);
   const [weatherAlerts, setWeatherAlerts] = useState<string[]>([]);
@@ -97,13 +99,13 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
     if (apiConfigurations.length === 0) {
       return (
         <div className="text-center py-12">
-            <h2 className="text-xl font-semibold text-gray-300">Welcome!</h2>
-            <p className="text-gray-400 mt-2">Please add an API Provider key in the settings to get started.</p>
+            <h2 className="text-xl font-semibold text-gray-300">{t('appTitle')}</h2>
+            <p className="text-gray-400 mt-2">{t('welcomeMessage')}</p>
             <button 
               onClick={() => setIsSettingsModalOpen(true)}
               className="mt-4 inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800"
             >
-              <SettingsIcon /> Open Settings
+              <SettingsIcon /> {t('openSettings')}
             </button>
         </div>
       );
@@ -140,11 +142,11 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
 
   const tabs = [
-    { name: FeatureTab.Capacity, icon: <LeafIcon />, tourId: 'growing-capacity-tab' },
-    { name: FeatureTab.Weather, icon: <CloudIcon /> },
-    { name: FeatureTab.Watering, icon: <WaterDropIcon /> },
-    { name: FeatureTab.Fertilization, icon: <SproutIcon /> },
-    { name: FeatureTab.Encyclopedia, icon: <BookIcon /> },
+    { name: FeatureTab.Capacity, icon: <LeafIcon />, label: t('tabCapacity'), tourId: 'growing-capacity-tab' },
+    { name: FeatureTab.Weather, icon: <CloudIcon />, label: t('tabWeather') },
+    { name: FeatureTab.Watering, icon: <WaterDropIcon />, label: t('tabWatering') },
+    { name: FeatureTab.Fertilization, icon: <SproutIcon />, label: t('tabFertilization') },
+    { name: FeatureTab.Encyclopedia, icon: <BookIcon />, label: t('tabEncyclopedia') },
   ];
 
   return (
@@ -162,13 +164,13 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
           <div className="container mx-auto px-4 py-3 md:py-4 flex justify-between items-center">
             <div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-green-400">
-                  AI Farming Cultivation Estimator
+                  {t('appTitle')}
               </h1>
             </div>
             <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                 <div data-tour-id="header-controls" className="hidden md:flex items-center gap-4">
                   <div className="flex items-center gap-1">
-                      <span className="text-gray-400">Provider:</span>
+                      <span className="text-gray-400">{t('provider')}</span>
                       <select
                           value={activeApiProviderId ?? ''}
                           onChange={(e: any) => dispatch({ type: 'SET_ACTIVE_PROVIDER_ID', payload: e.target.value })}
@@ -179,18 +181,18 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
                               <option key={p.id} value={p.id}>{p.name}</option>
                             ))
                           ) : (
-                            <option value="" disabled>Not Configured</option>
+                            <option value="" disabled>{t('noApiConfigured')}</option>
                           )}
                         </select>
                   </div>
                   <div className="flex items-center gap-1">
-                      <span className="text-gray-400">Units:</span>
+                      <span className="text-gray-400">{t('units')}</span>
                       <button onClick={toggleUnits} className="font-semibold text-green-400 hover:opacity-80 transition-opacity capitalize w-16 text-left">
                           {settings.units}
                       </button>
                   </div>
                   <div className="flex items-center gap-1">
-                      <span className="text-gray-400">Temp:</span>
+                      <span className="text-gray-400">{t('temp')}</span>
                       <button onClick={toggleTempUnit} className="font-semibold text-green-400 hover:opacity-80 transition-opacity capitalize w-12 text-left">
                           {settings.temperatureUnit === 'fahrenheit' ? '°F' : '°C'}
                       </button>
@@ -207,11 +209,24 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
                   <SettingsIcon />
                 </button>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-gray-300 truncate" title={user.email}>
+                  <label htmlFor="language-select" className="sr-only">Language</label>
+                  <select
+                    id="language-select"
+                    value={settings.language}
+                    onChange={(e) => dispatch({ type: 'SET_LANGUAGE', payload: e.target.value as any })}
+                    className="bg-gray-700 border border-gray-600 rounded-md py-1 px-2 text-white font-semibold focus:outline-none focus:ring-1 focus:ring-green-500"
+                  >
+                    {LANGUAGE_OPTIONS.map((lang) => (
+                      <option key={lang.code} value={lang.code}>
+                        {lang.nativeLabel}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-gray-300 truncate mt-2" title={user.email}>
                     {user.firstName || user.email} {user.lastName ? `${user.lastName}` : ''}
                   </p>
                   <button onClick={onLogout} className="font-medium text-red-400 hover:opacity-80 transition-opacity focus:outline-none">
-                    Logout
+                    {t('logout')}
                   </button>
                 </div>
               </div>
@@ -223,7 +238,7 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
           {isLoadingAlerts ? (
               <div className="flex justify-center items-center gap-2 text-gray-400 mb-4">
                 <Spinner />
-                <span>Checking for weather alerts...</span>
+                <span>{t('checkingWeatherAlerts')}</span>
               </div>
           ) : (
             <WeatherAlerts alerts={weatherAlerts} />
@@ -244,7 +259,7 @@ const App: React.FC<AppProps> = ({ user, onLogout }) => {
                     } group inline-flex items-center justify-center py-3 px-2 md:px-4 border-b-2 font-medium text-sm md:text-base focus:outline-none transition-all duration-200 flex-grow text-center`}
                   >
                     {tab.icon}
-                    <span className="ml-2 hidden sm:inline">{tab.name}</span>
+                    <span className="ml-2 hidden sm:inline">{tab.label}</span>
                   </button>
                 ))}
               </nav>

@@ -1,11 +1,13 @@
 import React, { createContext, useReducer, useContext, useEffect, ReactNode } from 'react';
 import { SavedLocation, ApiConfig, ProviderType } from '../types';
+import { AppLanguage } from '../i18n';
 
 // State Interfaces
 interface SettingsState {
   units: 'imperial' | 'metric';
   theme: 'dark' | 'light';
   temperatureUnit: 'fahrenheit' | 'celsius';
+  language: AppLanguage;
 }
 
 interface AppState {
@@ -20,6 +22,7 @@ interface AppState {
 type Action =
   | { type: 'SET_UNITS'; payload: 'imperial' | 'metric' }
   | { type: 'SET_TEMPERATURE_UNIT'; payload: 'fahrenheit' | 'celsius' }
+  | { type: 'SET_LANGUAGE'; payload: AppLanguage }
   | { type: 'SET_STATE'; payload: AppState }
   | { type: 'ADD_LOCATION'; payload: SavedLocation }
   | { type: 'REMOVE_LOCATION'; payload: string } // payload is location name
@@ -36,6 +39,7 @@ const initialState: AppState = {
     theme: 'dark',
     units: 'imperial',
     temperatureUnit: 'fahrenheit',
+    language: 'en',
   },
   savedLocations: [],
   apiConfigurations: [
@@ -59,6 +63,8 @@ const appReducer = (state: AppState, action: Action): AppState => {
       return { ...state, settings: { ...state.settings, units: action.payload, temperatureUnit: newTempUnit } };
     case 'SET_TEMPERATURE_UNIT':
         return { ...state, settings: { ...state.settings, temperatureUnit: action.payload } };
+    case 'SET_LANGUAGE':
+        return { ...state, settings: { ...state.settings, language: action.payload } };
     case 'ADD_LOCATION':
       if (state.savedLocations.some(loc => loc.name.toLowerCase() === action.payload.name.toLowerCase())) {
         return state;

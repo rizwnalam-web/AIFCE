@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import backendAPI from '../../services/backendAPI';
 import { RegistrationFormData, UserProfile } from '../../types';
+import { useAppContext } from '../../contexts/AppContext';
+import { translate, TranslationKey } from '../../i18n';
 
 interface RegisterProps {
   onRegisterSuccess: (user: UserProfile) => void;
@@ -10,6 +12,8 @@ interface RegisterProps {
 }
 
 const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin }) => {
+  const { state } = useAppContext();
+  const t = (key: TranslationKey) => translate(state.settings.language, key);
   const [formData, setFormData] = useState<RegistrationFormData>({
     firstName: '',
     lastName: '',
@@ -37,17 +41,17 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
     setError('');
 
     if (!formData.email || !formData.password) {
-      setError('Email and password are required.');
+      setError(t('errorRequiredFields'));
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t('errorPasswordsMismatch'));
       return;
     }
 
     if (!formData.firstName || !formData.lastName) {
-      setError('First name and last name are required.');
+      setError(t('errorNameRequired'));
       return;
     }
 
@@ -62,7 +66,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
       }
     } catch (e: any) {
       console.error('Registration API error:', e);
-      setError(e?.message || 'An unexpected error occurred. Please try again.');
+      setError(e?.message || t('errorUnexpected'));
     }
   };
   
@@ -78,8 +82,8 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
   if (isRegistered) {
       return (
         <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-full text-center">
-            <h2 className="text-2xl font-bold text-green-400 mb-4">Registration Successful!</h2>
-            <p className="text-gray-300 mb-6">Welcome, {formData.firstName}! Your account has been created successfully.</p>
+            <h2 className="text-2xl font-bold text-green-400 mb-4">{t('registrationSuccessful')}</h2>
+            <p className="text-gray-300 mb-6">{t('welcomeUser')} {formData.firstName}! {t('yourSmartFarmingAssistant')}</p>
             
             <div className="text-left bg-gray-700/50 p-4 rounded-md space-y-2 mb-6">
                 <p className="text-gray-400"><strong>Name:</strong> <span className="font-mono text-white">{formData.firstName} {formData.lastName}</span></p>
@@ -103,10 +107,10 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
             <form onSubmit={handleSubmit} className="space-y-3">
                 {/* Personal Information Section */}
                 <div>
-                    <h3 className="text-sm font-semibold text-green-400 mb-3 uppercase tracking-wide">Personal Information</h3>
+                    <h3 className="text-sm font-semibold text-green-400 mb-3 uppercase tracking-wide">{t('personalInformation')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <label htmlFor="firstName" className="block text-xs font-medium text-gray-300 mb-1">First Name *</label>
+                            <label htmlFor="firstName" className="block text-xs font-medium text-gray-300 mb-1">{t('firstName')} *</label>
                             <input
                                 type="text"
                                 id="firstName"
@@ -119,7 +123,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
                             />
                         </div>
                         <div>
-                            <label htmlFor="lastName" className="block text-xs font-medium text-gray-300 mb-1">Last Name *</label>
+                            <label htmlFor="lastName" className="block text-xs font-medium text-gray-300 mb-1">{t('lastName')} *</label>
                             <input
                                 type="text"
                                 id="lastName"
@@ -136,10 +140,10 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
 
                 {/* Account Credentials Section */}
                 <div>
-                    <h3 className="text-sm font-semibold text-green-400 mb-3 uppercase tracking-wide">Account Credentials</h3>
+                    <h3 className="text-sm font-semibold text-green-400 mb-3 uppercase tracking-wide">{t('accountCredentials')}</h3>
                     <div className="space-y-3">
                         <div>
-                            <label htmlFor="email" className="block text-xs font-medium text-gray-300 mb-1">Email *</label>
+                            <label htmlFor="email" className="block text-xs font-medium text-gray-300 mb-1">{t('email')} *</label>
                             <input
                                 type="email"
                                 id="email"
@@ -153,7 +157,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                                <label htmlFor="password" className="block text-xs font-medium text-gray-300 mb-1">Password *</label>
+                                <label htmlFor="password" className="block text-xs font-medium text-gray-300 mb-1">{t('password')} *</label>
                                 <input
                                     type="password"
                                     id="password"
@@ -166,7 +170,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
                                 />
                             </div>
                             <div>
-                                <label htmlFor="confirmPassword" className="block text-xs font-medium text-gray-300 mb-1">Confirm Password *</label>
+                                <label htmlFor="confirmPassword" className="block text-xs font-medium text-gray-300 mb-1">{t('confirmPassword')} *</label>
                                 <input
                                     type="password"
                                     id="confirmPassword"
@@ -184,10 +188,10 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
 
                 {/* Contact Information Section */}
                 <div>
-                    <h3 className="text-sm font-semibold text-green-400 mb-3 uppercase tracking-wide">Contact Information</h3>
+                    <h3 className="text-sm font-semibold text-green-400 mb-3 uppercase tracking-wide">{t('contactInformation')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="md:col-span-2">
-                            <label htmlFor="phone" className="block text-xs font-medium text-gray-300 mb-1">Phone</label>
+                            <label htmlFor="phone" className="block text-xs font-medium text-gray-300 mb-1">{t('phone')}</label>
                             <input
                                 type="tel"
                                 id="phone"
@@ -199,7 +203,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
                             />
                         </div>
                         <div className="md:col-span-2">
-                            <label htmlFor="streetAddress" className="block text-xs font-medium text-gray-300 mb-1">Street Address</label>
+                            <label htmlFor="streetAddress" className="block text-xs font-medium text-gray-300 mb-1">{t('streetAddress')}</label>
                             <input
                                 type="text"
                                 id="streetAddress"
@@ -211,7 +215,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
                             />
                         </div>
                         <div>
-                            <label htmlFor="city" className="block text-xs font-medium text-gray-300 mb-1">City</label>
+                            <label htmlFor="city" className="block text-xs font-medium text-gray-300 mb-1">{t('city')}</label>
                             <input
                                 type="text"
                                 id="city"
@@ -223,7 +227,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
                             />
                         </div>
                         <div>
-                            <label htmlFor="state" className="block text-xs font-medium text-gray-300 mb-1">State</label>
+                            <label htmlFor="state" className="block text-xs font-medium text-gray-300 mb-1">{t('state')}</label>
                             <input
                                 type="text"
                                 id="state"
@@ -235,7 +239,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
                             />
                         </div>
                         <div>
-                            <label htmlFor="country" className="block text-xs font-medium text-gray-300 mb-1">Country</label>
+                            <label htmlFor="country" className="block text-xs font-medium text-gray-300 mb-1">{t('country')}</label>
                             <input
                                 type="text"
                                 id="country"
@@ -247,7 +251,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
                             />
                         </div>
                         <div>
-                            <label htmlFor="zipCode" className="block text-xs font-medium text-gray-300 mb-1">Zip Code</label>
+                            <label htmlFor="zipCode" className="block text-xs font-medium text-gray-300 mb-1">{t('zipCode')}</label>
                             <input
                                 type="text"
                                 id="zipCode"
@@ -264,16 +268,16 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
                 {error && <p className="text-red-400 text-sm text-center bg-red-900/20 p-2 rounded">{error}</p>}
 
                 <button type="submit" className="w-full mt-4 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors">
-                    Register
+                    {t('register')}
                 </button>
             </form>
         </div>
         
         <div className="border-t border-gray-700 px-8 py-4 bg-gray-900/50">
             <p className="text-center text-sm text-gray-400">
-                Already have an account?{' '}
+                {t('haveAccount')}{' '}
                 <button onClick={onSwitchToLogin} className="font-medium text-green-400 hover:text-green-300 transition-colors">
-                    Sign in
+                    {t('signIn')}
                 </button>
             </p>
         </div>
