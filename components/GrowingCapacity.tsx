@@ -6,6 +6,7 @@ import Card from './shared/Card';
 import AutoCompleteInput from './shared/AutoCompleteInput';
 import { CROP_SUGGESTION_LIST, LOCATION_SUGGESTION_LIST } from '../data/suggestions';
 import { useAppContext } from '../contexts/AppContext';
+import { saveAndDownloadReport } from '../utils/reportUtils';
 import { GrowthTimelineChart } from './GrowthTimelineChart';
 
 const GrowingCapacity: React.FC = () => {
@@ -153,20 +154,16 @@ const GrowingCapacity: React.FC = () => {
     setLoading(false);
   };
   
-  const handleExportPlan = (format: 'txt' | 'pdf') => {
+  const handleExportPlan = async (format: 'txt' | 'pdf') => {
     if (!plan) return;
     const filename = `growing-plan-${plants.replace(/\s+/g, '_')}`;
     if (format === 'pdf') {
-       // PDF generation is complex client-side. This simulates a download with the report content.
-        const blob = new Blob([`--- SIMULATED PDF REPORT ---\n\nGrowing Plan for ${plants}\n\n${plan}`], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `${filename}.pdf.txt`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+      await saveAndDownloadReport(
+        `Growing Plan - ${plants}`,
+        'growing-plan',
+        `Growing Plan for ${plants}\n\n${plan}`,
+        filename
+      );
     } else {
         const blob = new Blob([plan], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);

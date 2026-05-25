@@ -13,6 +13,15 @@ async function main() {
     create: {
       id: uuidv4(),
       email: 'demo@farming.app',
+      password: 'demo-password',
+      firstName: 'Demo',
+      lastName: 'User',
+      phone: '+1 (555) 123-4567',
+      streetAddress: '123 Farm Lane',
+      city: 'Springfield',
+      state: 'IL',
+      country: 'USA',
+      zipCode: '62701',
     },
   });
 

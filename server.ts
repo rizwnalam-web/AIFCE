@@ -8,6 +8,7 @@ import prisma, { testConnection, disconnectPrisma } from './server/db.js';
 import appStateRoutes from './server/routes/appStateRoutes.js';
 import llmRoutes from './server/routes/llmRoutes.js';
 import authRoutes from './server/routes/authRoutes.js';
+import reportRoutes from './server/routes/reportRoutes.js';
 
 // Load environment variables from server/.env file
 dotenv.config({ path: path.resolve(process.cwd(), 'server', '.env') });
@@ -81,7 +82,8 @@ async function startServer() {
 
   // Mount Auth routes
   app.use('/api/auth', authRoutes);
-
+  // Mount Report routes
+  app.use('/api/reports', reportRoutes);
   // Proxy to Generate Text (with optional JSON Schema formatting)
   app.post('/api/gemini/generate', async (req, res) => {
     try {

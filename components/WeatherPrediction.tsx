@@ -7,6 +7,7 @@ import Card from './shared/Card';
 import AutoCompleteInput from './shared/AutoCompleteInput';
 import { LOCATION_SUGGESTION_LIST } from '../data/suggestions';
 import { useAppContext } from '../contexts/AppContext';
+import { saveAndDownloadReport } from '../utils/reportUtils';
 
 interface WeatherPredictionProps {
   checkAlertsForLocation: (location: string) => void;
@@ -135,16 +136,8 @@ const WeatherPrediction: React.FC<WeatherPredictionProps> = ({ checkAlertsForLoc
       }
   };
 
-  const handlePdfExport = (content: string, filename: string) => {
-      const blob = new Blob([`--- SIMULATED PDF REPORT ---\n\n${content}`], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${filename}.pdf.txt`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+  const handlePdfExport = async (content: string, filename: string, title: string, reportType: string) => {
+      await saveAndDownloadReport(title, reportType, content, filename);
   };
 
   const formatForecastForExport = (forecastData: WeatherForecast): string => {
@@ -338,7 +331,7 @@ const WeatherPrediction: React.FC<WeatherPredictionProps> = ({ checkAlertsForLoc
                             <ShareIcon />
                         </button>
                         <button 
-                            onClick={() => handlePdfExport(formatHistoryForExport(historicalData), `historical-weather-${historicalData.location.replace(/\s+/g, '_')}`)}
+                            onClick={() => handlePdfExport(formatHistoryForExport(historicalData), `historical-weather-${historicalData.location.replace(/\s+/g, '_')}`, `Historical Weather Report - ${historicalData.location}`, 'weather-history')}
                             title="Export as PDF"
                             className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-500 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                         >
@@ -407,7 +400,7 @@ const WeatherPrediction: React.FC<WeatherPredictionProps> = ({ checkAlertsForLoc
                       <ShareIcon />
                   </button>
                   <button 
-                      onClick={() => handlePdfExport(formatForecastForExport(forecast), `forecast-${forecast.location.replace(/\s+/g, '_')}`)}
+                      onClick={() => handlePdfExport(formatForecastForExport(forecast), `forecast-${forecast.location.replace(/\s+/g, '_')}`, `7-Day Forecast - ${forecast.location}`, 'weather-forecast')}
                       title="Export Forecast as PDF"
                       className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-500 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                   >

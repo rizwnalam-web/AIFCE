@@ -185,25 +185,20 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
                 {/* Contact Information Section */}
                 <div>
                     <h3 className="text-sm font-semibold text-green-400 mb-3 uppercase tracking-wide">Contact Information</h3>
-                    <div>
-                        <label htmlFor="phone" className="block text-xs font-medium text-gray-300 mb-1">Phone</label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                            placeholder="+1 (555) 123-4567"
-                        />
-                    </div>
-                </div>
-
-                {/* Address Section */}
-                <div>
-                    <h3 className="text-sm font-semibold text-green-400 mb-3 uppercase tracking-wide">Address</h3>
-                    <div className="space-y-3">
-                        <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="md:col-span-2">
+                            <label htmlFor="phone" className="block text-xs font-medium text-gray-300 mb-1">Phone</label>
+                            <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={handleChange}
+                                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                placeholder="+1 (555) 123-4567"
+                            />
+                        </div>
+                        <div className="md:col-span-2">
                             <label htmlFor="streetAddress" className="block text-xs font-medium text-gray-300 mb-1">Street Address</label>
                             <input
                                 type="text"
@@ -215,57 +210,53 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onSwitchToLogin 
                                 placeholder="123 Farm Lane"
                             />
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
-                            <div>
-                                <label htmlFor="city" className="block text-xs font-medium text-gray-300 mb-1">City</label>
-                                <input
-                                    type="text"
-                                    id="city"
-                                    name="city"
-                                    value={formData.city}
-                                    onChange={handleChange}
-                                    className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                                    placeholder="Springfield"
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="state" className="block text-xs font-medium text-gray-300 mb-1">State</label>
-                                <input
-                                    type="text"
-                                    id="state"
-                                    name="state"
-                                    value={formData.state}
-                                    onChange={handleChange}
-                                    className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                                    placeholder="IL"
-                                />
-                            </div>
+                        <div>
+                            <label htmlFor="city" className="block text-xs font-medium text-gray-300 mb-1">City</label>
+                            <input
+                                type="text"
+                                id="city"
+                                name="city"
+                                value={formData.city}
+                                onChange={handleChange}
+                                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                placeholder="Springfield"
+                            />
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
-                            <div>
-                                <label htmlFor="country" className="block text-xs font-medium text-gray-300 mb-1">Country</label>
-                                <input
-                                    type="text"
-                                    id="country"
-                                    name="country"
-                                    value={formData.country}
-                                    onChange={handleChange}
-                                    className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                                    placeholder="USA"
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="zipCode" className="block text-xs font-medium text-gray-300 mb-1">Zip Code</label>
-                                <input
-                                    type="text"
-                                    id="zipCode"
-                                    name="zipCode"
-                                    value={formData.zipCode}
-                                    onChange={handleChange}
-                                    className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                                    placeholder="62701"
-                                />
-                            </div>
+                        <div>
+                            <label htmlFor="state" className="block text-xs font-medium text-gray-300 mb-1">State</label>
+                            <input
+                                type="text"
+                                id="state"
+                                name="state"
+                                value={formData.state}
+                                onChange={handleChange}
+                                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                placeholder="IL"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="country" className="block text-xs font-medium text-gray-300 mb-1">Country</label>
+                            <input
+                                type="text"
+                                id="country"
+                                name="country"
+                                value={formData.country}
+                                onChange={handleChange}
+                                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                placeholder="USA"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="zipCode" className="block text-xs font-medium text-gray-300 mb-1">Zip Code</label>
+                            <input
+                                type="text"
+                                id="zipCode"
+                                name="zipCode"
+                                value={formData.zipCode}
+                                onChange={handleChange}
+                                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                placeholder="62701"
+                            />
                         </div>
                     </div>
                 </div>

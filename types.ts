@@ -143,3 +143,13 @@ export interface AuthResponse {
   message?: string;
   error?: string;
 }
+
+export interface SavedReport {
+  id: string;
+  title: string;
+  reportType: string;
+  filename?: string;
+  content: string;
+  createdAt?: string;
+  updatedAt?: string;
+}

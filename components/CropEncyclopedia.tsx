@@ -7,6 +7,7 @@ import { PlantingCalendarData, CropComparisonData, SavedComparison, ComparedCrop
 import AutoCompleteInput from './shared/AutoCompleteInput';
 import { CROP_SUGGESTION_LIST, LOCATION_SUGGESTION_LIST } from '../data/suggestions';
 import { useAppContext } from '../contexts/AppContext';
+import { saveAndDownloadReport } from '../utils/reportUtils';
 
 export interface PlantingReminder {
   id: string;
@@ -198,16 +199,8 @@ const CropEncyclopedia: React.FC = () => {
       }
   };
 
-  const handlePdfExport = (content: string, filename: string) => {
-      const blob = new Blob([`--- SIMULATED PDF REPORT ---\n\n${content}`], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${filename}.pdf.txt`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+  const handlePdfExport = async (content: string, filename: string, title: string, reportType: string) => {
+      await saveAndDownloadReport(title, reportType, content, filename);
   };
 
   const fetchCropData = async (cropName: string) => {
@@ -459,12 +452,12 @@ const CropEncyclopedia: React.FC = () => {
     return content;
   };
 
-  const handleExportCalendar = (format: 'csv' | 'pdf') => {
+  const handleExportCalendar = async (format: 'csv' | 'pdf') => {
     if (!calendarData) return;
     const filename = `${calendarData.crop.replace(/\s+/g, '_')}-planting-calendar`;
     
     if(format === 'pdf') {
-        handlePdfExport(formatCalendarForExport(calendarData), filename);
+        await handlePdfExport(formatCalendarForExport(calendarData), filename, `Planting Calendar - ${calendarData.crop}`, 'planting-calendar');
         return;
     }
 
@@ -778,7 +771,7 @@ const CropEncyclopedia: React.FC = () => {
                         <ShareIcon />
                       </button>
                       <button 
-                        onClick={() => handlePdfExport(cropInfo, `guide-${currentCrop.replace(/\s+/g, '_')}`)}
+                        onClick={() => handlePdfExport(cropInfo, `guide-${currentCrop.replace(/\s+/g, '_')}`, `Crop Guide - ${currentCrop}`, 'crop-guide')}
                         title="Export Guide as PDF"
                         className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                       >
@@ -813,7 +806,7 @@ const CropEncyclopedia: React.FC = () => {
                         <ShareIcon />
                       </button>
                       <button 
-                        onClick={() => handlePdfExport(trendingAdvice, `trending-${currentCrop.replace(/\s+/g, '_')}-${activeGroundingRegion.replace(/\s+/g, '_')}`)}
+                        onClick={() => handlePdfExport(trendingAdvice, `trending-${currentCrop.replace(/\s+/g, '_')}-${activeGroundingRegion.replace(/\s+/g, '_')}`, `Trending Advice - ${currentCrop}`, 'trending-advice')}
                         title="Export Advice as PDF"
                         className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                       >
@@ -1217,7 +1210,7 @@ const CropEncyclopedia: React.FC = () => {
                         <ShareIcon />
                     </button>
                     <button
-                        onClick={() => handlePdfExport(formatComparisonForExport(comparisonData), `crop-comparison-${comparisonData.crops.map(c=>c.name).join('_')}`)}
+                        onClick={() => handlePdfExport(formatComparisonForExport(comparisonData), `crop-comparison-${comparisonData.crops.map(c=>c.name).join('_')}`, `Crop Comparison - ${comparisonData.crops.map(c=>c.name).join(' vs ')}`, 'crop-comparison')}
                         title="Export Comparison as PDF"
                         className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                     >

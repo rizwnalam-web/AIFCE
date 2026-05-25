@@ -6,6 +6,7 @@ import { SproutIcon, ShareIcon, PdfIcon } from './icons';
 import { HealthHistoryEntry } from '../types';
 import AutoCompleteInput from './shared/AutoCompleteInput';
 import { CROP_SUGGESTION_LIST, LOCATION_SUGGESTION_LIST } from '../data/suggestions';
+import { saveAndDownloadReport } from '../utils/reportUtils';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -133,16 +134,8 @@ const FertilizationEstimator: React.FC = () => {
       }
   };
 
-  const handlePdfExport = (content: string, filename: string) => {
-      const blob = new Blob([`--- SIMULATED PDF REPORT ---\n\n${content}`], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${filename}.pdf.txt`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+  const handlePdfExport = async (content: string, filename: string, title: string, reportType: string) => {
+      await saveAndDownloadReport(title, reportType, content, filename);
   };
 
   const getFullReportText = (entry: HealthHistoryEntry): string => {
@@ -240,7 +233,7 @@ ${entry.plan}`;
                     <ShareIcon />
                 </button>
                 <button 
-                    onClick={() => handlePdfExport(plan, `health-analysis-${cropType.replace(/\s+/g, '_')}`)}
+                    onClick={() => handlePdfExport(plan, `health-analysis-${cropType.replace(/\s+/g, '_')}`, `Crop Health Analysis - ${cropType}`, 'health-analysis')}
                     title="Export Analysis as PDF"
                     className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                 >
@@ -284,7 +277,7 @@ ${entry.plan}`;
                         <ShareIcon />
                     </button>
                     <button 
-                        onClick={(e) => { e.stopPropagation(); handlePdfExport(getFullReportText(entry), `report-${entry.cropType.replace(/\s+/g, '_')}-${entry.date}`); }}
+                        onClick={(e) => { e.stopPropagation(); handlePdfExport(getFullReportText(entry), `report-${entry.cropType.replace(/\s+/g, '_')}-${entry.date}`, `Health Report - ${entry.cropType}`, 'health-report'); }}
                         title="Export Report as PDF"
                         className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                     >
@@ -347,7 +340,7 @@ ${entry.plan}`;
                         <ShareIcon /> Share
                     </button>
                     <button 
-                        onClick={() => handlePdfExport(getFullReportText(selectedHistoryEntry), `report-${selectedHistoryEntry.cropType.replace(/\s+/g, '_')}-${selectedHistoryEntry.date}`)}
+                        onClick={() => handlePdfExport(getFullReportText(selectedHistoryEntry), `report-${selectedHistoryEntry.cropType.replace(/\s+/g, '_')}-${selectedHistoryEntry.date}`, `Health Report - ${selectedHistoryEntry.cropType}`, 'health-report')}
                         className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition-colors"
                     >
                         <PdfIcon /> Export PDF

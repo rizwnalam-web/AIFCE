@@ -210,6 +210,26 @@ class BackendAPIService {
     });
   }
 
+  async saveReport(title: string, reportType: string, content: string, filename?: string) {
+    if (!this.userId) throw new Error('User ID not set');
+    return this.fetch(`/api/reports/${this.userId}`, 'POST', {
+      title,
+      reportType,
+      content,
+      filename,
+    });
+  }
+
+  async getReports() {
+    if (!this.userId) throw new Error('User ID not set');
+    return this.fetch(`/api/reports/${this.userId}`);
+  }
+
+  async getReport(reportId: string) {
+    if (!this.userId) throw new Error('User ID not set');
+    return this.fetch(`/api/reports/${this.userId}/${reportId}`);
+  }
+
   // Health checks
   async checkServerHealth() {
     return this.fetch('/api/health');

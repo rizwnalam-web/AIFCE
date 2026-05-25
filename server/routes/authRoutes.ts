@@ -7,7 +7,18 @@ const router = Router();
 // Registration endpoint
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, firstName, lastName } = req.body;
+    const {
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      streetAddress,
+      city,
+      state,
+      country,
+      zipCode,
+    } = req.body;
     
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -21,6 +32,12 @@ router.post('/register', async (req, res) => {
         password, // NOTE: In production, passwords must be hashed (e.g., using bcrypt)!
         firstName,
         lastName,
+        phone,
+        streetAddress,
+        city,
+        state,
+        country,
+        zipCode,
       }
     });
 
